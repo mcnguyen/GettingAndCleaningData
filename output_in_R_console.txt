@@ -1,0 +1,15 @@
+
+Data Science: Getting and Cleaning Data by Johns Hopkins University via Coursera
+
+collecting datasets...
+[1] "  collecting test datasets..."
+[1] "  collecting train datasets..."
+
+computing means of variables...
+Please see file uci_har_mean.csv due to limited print options
+
+computing standard deviations of variables...
+Please see file uci_har_sd.csv due to limited print options
+
+computing means of variables in groups...
+Please see file uci_har_grp_avg.table due to limited print options
