@@ -217,6 +217,30 @@ main <- function() {
   # convert the numeric values in the activity column to factor
   df2 <- factor_activity(df2)
 
+
+# https://github.com/daishwary/Getting-and-Cleaning-Data-Assignment/blob/main/run_analysis.R:58
+#  #4. extract data by cols & using descriptive name
+#  x_data <- x_data[selectedCols]
+#  allData <- cbind(s_data, y_data, x_data)
+#  colnames(allData) <- c("Subject", "Activity", selectedColNames)
+#
+#  allData$Activity <- factor(allData$Activity, levels = a_label[,1], labels = a_label[,2])
+#  allData$Subject <- as.factor(allData$Subject)
+#
+#
+#  #5. generate tidy data set
+#  meltedData <- melt(allData, id = c("Subject", "Activity"))
+#  tidyData <- dcast(meltedData, Subject + Activity ~ variable, mean)
+#
+
+
+# https://github.com/NthabiM-619/GettingAndCleaningDataProject/blob/master/run_analysis.R:79
+#  #Creating independent tidy data set and showing output
+#  Data2 <- aggregate(. ~subject + activity, Data, mean)
+#  Data2 <- Data2[order(Data2$subject, Data2$activity),]
+#  write.table(Data2, file = "tidydata.txt", row.name = FALSE)
+
+
   # print the computed averages of each variables
   # options('max.print' = nrow(df2))
   # print(df2)
