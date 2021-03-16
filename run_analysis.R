@@ -82,9 +82,22 @@ getDataset <- function() {
 compute_means_of_variables <- function(df) {
 
   # load the data frame into a 'data frame tbl' or 'tbl_df'
-  df3 <- tibble::as_tibble(df)
+  # df3 <- tibble::as_tibble(df)
+  df3 <- as_tibble(df)
 
   df3 <- df3 %>% group_by(subject, activity)
+
+  # summarize_all(df3, mean)
+  # Note: the above line could have been substituted for the rest of the code
+  # in this function.
+  #
+  # In short, this entire function could have been written as one following line
+  # as_tibble(df) %>% group_by(subject, activity) %>% summarize_all(mean)
+  # https://github.com/kkristacia/datasciencecoursera/blob/main/Extracting_Cleaning/project/run_analysis.R:50
+  # OR
+  # as_tibble(df) %>% group_by(subject, activity) %>% summarize_each(mean)
+  # https://github.com/pozueco/RProgrammingAssignment3/blob/main/run_analysis.R:58
+  # NOTE: summarize_each is deprecated in dplyr 0.7.0.  Use summarize_all or across instead.
 
   # In the following for loop, we will compute the avarage of each variable
   # and then build a new dataframe for the computed averages
@@ -125,6 +138,7 @@ factor_activity <- function(df) {
     #   col_name <- 'activity' OR function(df, col_name)
     #   cell <- df[[col_name]][i]  # when passed as func arg, must be 'activity' with quotes
     #   cell <- df(substitute(col_name))[i]  # as func arg, could be just activity without quotes
+    # https://stackoverflow.com/questions/2641653/pass-a-data-frame-column-name-to-a-function
 
     if (cell == 1) {
       df$activity[i] <- 'WALKING'
@@ -143,6 +157,22 @@ factor_activity <- function(df) {
 
   # let's convert the strings to factor
   df$activity <- as.factor(df$activity)
+
+  # This entire function could have been written as one following line
+  # library(plyr)
+  # activity_labels <- read.table('activity_labels.txt')
+  # df$activity <- mapvalues(df$activity,
+  #                          from = activity_lables$V1,
+  #                          to = activity_labels$V2)
+  # cat('factor levels: ', levels(df$activity), '\n')
+  # https://github.com/luisballesteros/Getting-and-Cleaning-Data-Course-Project/blob/main/descriptive_activity_names.R:7
+  #
+  # Another technique is to use the lookup table as follow
+  # activity_labels <- read.table('UCI HAR Dataset/activity_labels.txt')
+  # lookup <- activity_labels$V2
+  # df$activity <- lookup[df$activity]
+  # df$activity <- as.factor(df$activity)
+  # https://github.com/kkristacia/datasciencecoursera/blob/main/Extracting_Cleaning/project/run_analysis.R:33
 
   df
 }
