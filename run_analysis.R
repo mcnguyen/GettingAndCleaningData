@@ -122,8 +122,9 @@ factor_activity <- function(df) {
     #   The line above should work well.  However, the following lines
     #   will allow the change of the column name when applicable.
     #
-    #   col_name <- 'activity'
-    #   cell <- df[[col_name]][i]
+    #   col_name <- 'activity' OR function(df, col_name)
+    #   cell <- df[[col_name]][i]  # when passed as func arg, must be 'activity' with quotes
+    #   cell <- df(substitute(col_name))[i]  # as func arg, could be just activity without quotes
 
     if (cell == 1) {
       df$activity[i] <- 'WALKING'
