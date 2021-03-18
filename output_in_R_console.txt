@@ -1,15 +1,15 @@
 
 Data Science: Getting and Cleaning Data by Johns Hopkins University via Coursera
 
+Downloading data file...
+  % Total    % Received % Xferd  Average Speed   Time    Time     Time  Current
+                                 Dload  Upload   Total   Spent    Left  Speed
+100 59.6M  100 59.6M    0     0  43.7M      0  0:00:01  0:00:01 --:--:-- 43.7M
+Unzipping data file...
+
 collecting datasets...
 [1] "  collecting test datasets..."
 [1] "  collecting train datasets..."
 
-computing means of variables...
-Please see file uci_har_mean.csv due to limited print options
-
-computing standard deviations of variables...
-Please see file uci_har_sd.csv due to limited print options
-
 computing means of variables in groups...
-Please see file uci_har_grp_avg.table due to limited print options
+Please see file uci_har_grp_mean.txt due to limited print options

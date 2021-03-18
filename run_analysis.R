@@ -2,69 +2,41 @@
 # Objective : Getting and Cleaning Data Course Project
 # Created on: 3/13/21
 
+
 library(dplyr)
 
-# name columns of the given dataframe with the prefix and column indexes as suffix
-rename_dfcols <- function(df, prefix) {
-  for (i in 1:ncol(df)) {
-    names(df)[i] <- sprintf('%s_%d', prefix, i)
+
+# This function downloads the zipped data file from a particular source
+downloadDataFile <- function() {
+  filename <- 'getdata_projectfiles_UCI HAR Dataset.zip'
+  if (!file.exists(filename)) {
+    cat('\nDownloading data file...\n')
+    fileUrl <- "https://d396qusza40orc.cloudfront.net/getdata%2Fprojectfiles%2FUCI%20HAR%20Dataset.zip"
+    download.file(fileUrl, destfile = filename, method = 'curl')
+
+    cat('Unzipping data file...\n')
+    unzip(filename)
   }
-  df
 }
+
 
 # This function collect all datasets in either 'test' or 'train' folder.
 # All datasets will be bound based on their columns in the resulting data frame
 getDataSubset <- function(dataset) {
 
   # prepare paths to collect data into columns
-  subpath <- 'UCI HAR Dataset/%s/%s/%%s_%s.txt'
-  subpath1 <- sprintf(subpath, dataset, '.', dataset)
-  subpath2 <- sprintf(subpath, dataset, 'Inertial Signals', dataset)
+  subpath <- sprintf('UCI HAR Dataset/%s/%%s_%s.txt', dataset, dataset)
 
   # collect data from various files
-  subject <- read.delim(sprintf(subpath1, 'subject'), header = FALSE)
-  names(subject) <- 'subject'
-
-  y <- read.delim(sprintf(subpath1, 'y'), header = FALSE)
-  names(y) <- 'activity'
-
-  x <- read.table(sprintf(subpath1, 'X'), header = FALSE)
-  x <- rename_dfcols(x, 'x')
-
-  body_acc_x <- read.table(sprintf(subpath2, 'body_acc_x'), header = FALSE)
-  body_acc_x <- rename_dfcols(body_acc_x, 'body_acc_x')
-
-  body_acc_y <- read.table(sprintf(subpath2, 'body_acc_y'), header = FALSE)
-  body_acc_y <- rename_dfcols(body_acc_y, 'body_acc_y')
-
-  body_acc_z <- read.table(sprintf(subpath2, 'body_acc_z'), header = FALSE)
-  body_acc_z <- rename_dfcols(body_acc_z, 'body_acc_z')
-
-  body_gyro_x <- read.table(sprintf(subpath2, 'body_gyro_x'), header = FALSE)
-  body_gyro_x <- rename_dfcols(body_gyro_x, 'body_gyro_x')
-
-  body_gyro_y <- read.table(sprintf(subpath2, 'body_gyro_y'), header = FALSE)
-  body_gyro_y <- rename_dfcols(body_gyro_y, 'body_gyro_y')
-
-  body_gyro_z <- read.table(sprintf(subpath2, 'body_gyro_z'), header = FALSE)
-  body_gyro_z <- rename_dfcols(body_gyro_z, 'body_gyro_z')
-
-  total_acc_x <- read.table(sprintf(subpath2, 'total_acc_x'), header = FALSE)
-  total_acc_x <- rename_dfcols(total_acc_x, 'total_acc_x')
-
-  total_acc_y <- read.table(sprintf(subpath2, 'total_acc_y'), header = FALSE)
-  total_acc_y <- rename_dfcols(total_acc_y, 'total_acc_y')
-
-  total_acc_z <- read.table(sprintf(subpath2, 'total_acc_z'), header = FALSE)
-  total_acc_z <- rename_dfcols(total_acc_z, 'total_acc_z')
+  subject <- read.delim(sprintf(subpath, 'subject'), header = FALSE)
+  y <- read.delim(sprintf(subpath, 'y'), header = FALSE)
+  x <- read.table(sprintf(subpath, 'X'), header = FALSE)
 
   # bind columns
-  cbind(subject, y, x,
-        body_acc_x, body_acc_y, body_acc_z,
-        body_gyro_x, body_gyro_y, body_gyro_z,
-        total_acc_x, total_acc_y, total_acc_z)
+  cbind(subject, y, x)
 
 }
+
 
 # This function callects all datasets in the 'test' and 'train' folders.
 # The datasets will be merged based on rows in the resulting data frame.
@@ -75,107 +47,14 @@ getDataset <- function() {
   print('  collecting train datasets...')
   train <- getDataSubset('train')
 
-  rbind(test, train)
+  total <- rbind(test, train)
+
+  features <- read.table('UCI HAR Dataset/features.txt')
+  colnames(total) <- c('Subject', 'Activity', features[,2])
+
+  total
 }
 
-# compute the average of each variable for each activity and each subject
-compute_means_of_variables <- function(df) {
-
-  # load the data frame into a 'data frame tbl' or 'tbl_df'
-  # df3 <- tibble::as_tibble(df)
-  df3 <- as_tibble(df)
-
-  df3 <- df3 %>% group_by(subject, activity)
-
-  # summarize_all(df3, mean)
-  # Note: the above line could have been substituted for the rest of the code
-  # in this function.
-  #
-  # In short, this entire function could have been written as one following line
-  # as_tibble(df) %>% group_by(subject, activity) %>% summarize_all(mean)
-  # https://github.com/kkristacia/datasciencecoursera/blob/main/Extracting_Cleaning/project/run_analysis.R:50
-  # OR
-  # as_tibble(df) %>% group_by(subject, activity) %>% summarize_each(mean)
-  # https://github.com/pozueco/RProgrammingAssignment3/blob/main/run_analysis.R:58
-  # NOTE: summarize_each is deprecated in dplyr 0.7.0.  Use summarize_all or across instead.
-
-  # In the following for loop, we will compute the avarage of each variable
-  # and then build a new dataframe for the computed averages
-  first <- TRUE
-  res <- data.frame()
-  for (col_name in names(df3[, 3:ncol(df3)])) {
-
-    # Note 1:
-    #   https://dplyr.tidyverse.org/reference/summarise.html
-    #   Refer to column names stored as strings with the `.data` pronoun
-    # Note 2:
-    #   the option ".groups = 'drop'" is to suppress a warning message
-    df4 <- summarize(df3, mean(.data[[col_name]]), .groups = 'drop')
-
-    # rename the newly computed mean column accordingly
-    names(df4)[3] <- sprintf('avg_%s', col_name)
-
-    if (first) {
-      first <- FALSE
-      res <- df4
-    } else {
-      res <- cbind(res, df4[,3])
-    }
-  }
-
-  res
-}
-
-# This function converts the integers in the 'activity' column to factor.
-factor_activity <- function(df) {
-  for (i in 1:nrow(df)) {
-    cell <- df$activity[i]
-
-    # Coding Note:
-    #   The line above should work well.  However, the following lines
-    #   will allow the change of the column name when applicable.
-    #
-    #   col_name <- 'activity' OR function(df, col_name)
-    #   cell <- df[[col_name]][i]  # when passed as func arg, must be 'activity' with quotes
-    #   cell <- df(substitute(col_name))[i]  # as func arg, could be just activity without quotes
-    # https://stackoverflow.com/questions/2641653/pass-a-data-frame-column-name-to-a-function
-
-    if (cell == 1) {
-      df$activity[i] <- 'WALKING'
-    } else if (cell == 2) {
-      df$activity[i] <- 'WALKING_UPSTAIRS'
-    } else if (cell == 3) {
-      df$activity[i] <- 'WALKING_DOWNSTAIRS'
-    } else if (cell == 4) {
-      df$activity[i] <- 'SITTING'
-    } else if (cell == 5) {
-      df$activity[i] <- 'STANDING'
-    } else if (cell == 6) {
-      df$activity[i] <- 'LAYING'
-    }
-  }
-
-  # let's convert the strings to factor
-  df$activity <- as.factor(df$activity)
-
-  # This entire function could have been written as one following line
-  # library(plyr)
-  # activity_labels <- read.table('activity_labels.txt')
-  # df$activity <- mapvalues(df$activity,
-  #                          from = activity_lables$V1,
-  #                          to = activity_labels$V2)
-  # cat('factor levels: ', levels(df$activity), '\n')
-  # https://github.com/luisballesteros/Getting-and-Cleaning-Data-Course-Project/blob/main/descriptive_activity_names.R:7
-  #
-  # Another technique is to use the lookup table as follow
-  # activity_labels <- read.table('UCI HAR Dataset/activity_labels.txt')
-  # lookup <- activity_labels$V2
-  # df$activity <- lookup[df$activity]
-  # df$activity <- as.factor(df$activity)
-  # https://github.com/kkristacia/datasciencecoursera/blob/main/Extracting_Cleaning/project/run_analysis.R:33
-
-  df
-}
 
 # This function collects the give datasets and then computes the means
 # of the variables in the 3rd columns onward.
@@ -183,70 +62,41 @@ main <- function() {
   # Note: use 'cat' instead of 'print' to get the new line '\n' into effect.
   cat('\nData Science: Getting and Cleaning Data by Johns Hopkins University via Coursera\n');
 
+  # download the zipped data file if not existed
+  downloadDataFile()
+
   # collect all datasets
   cat('\ncollecting datasets...\n')
-  df <- getDataset()
+  data <- getDataset()
 
+  # Extract only variables that represent means and standard deviations of measurements
+  # Note 1: Columns 1 and 2 are requirements for the Subject and Activity variables
+  # Note 2: We need to select columns before converting to tibble due to duplicated
+  #         names in the given features.  IOW, we cannot use the 'select' verb of the
+  #         dplyr package because we cannot convert the dataset to tibble data format.
+  data <- subset(data, select = c(1, 2, grep('mean|std', colnames(data))))
 
-  # compute the means of the 3rd variables onward because the 1st column
-  # is the subject and the 2nd column is the activity being measured in
-  # the 3rd column onward.
-  cat('\ncomputing means of variables...\n')
-  res <- sapply(df[,3:ncol(df)], mean)
-  # print(res)
-  write.csv(res, 'uci_har_mean.csv')
-  cat('Please see file uci_har_mean.csv due to limited print options\n')
-  rm('res') # remove the former data frame in 'res' to save memory
+  # Convert the data set to tibble format, select applicable variables,
+  # group the data set based on subject and activity before computing
+  # the means of each variables in the groups
+  data <- data %>% as_tibble %>%
+    group_by(Subject, Activity) %>%
+    summarize_all(mean)
 
+  # Read the labels for the activities
+  activity_label <- read.table('UCI HAR Dataset/activity_labels.txt')
 
-  # compute the standard deviations of the 3rd variables onward because
-  # the 1st column is the subject and the 2nd column is the activity being
-  # measured in the 3rd column onward.
-  cat('\ncomputing standard deviations of variables...\n')
-  res <- sapply(df[,3:ncol(df)], sd)
-  # print(res)
-  write.csv(res, 'uci_har_sd.csv')
-  cat('Please see file uci_har_sd.csv due to limited print options\n')
-  rm('res') # remove the former data frame in 'res' to save memory
-
+  # Factorize the activities in the data set
+  data$Activity <- data$Activity %>%
+    factor(levels = activity_label[,1], labels = activity_label[,2])
 
   cat('\ncomputing means of variables in groups...\n')
-  df2 <- compute_means_of_variables(df)
-  rm('df') # remove the former data frame in 'df' to save memory
-
-  # convert the numeric values in the activity column to factor
-  df2 <- factor_activity(df2)
-
-
-# https://github.com/daishwary/Getting-and-Cleaning-Data-Assignment/blob/main/run_analysis.R:58
-#  #4. extract data by cols & using descriptive name
-#  x_data <- x_data[selectedCols]
-#  allData <- cbind(s_data, y_data, x_data)
-#  colnames(allData) <- c("Subject", "Activity", selectedColNames)
-#
-#  allData$Activity <- factor(allData$Activity, levels = a_label[,1], labels = a_label[,2])
-#  allData$Subject <- as.factor(allData$Subject)
-#
-#
-#  #5. generate tidy data set
-#  meltedData <- melt(allData, id = c("Subject", "Activity"))
-#  tidyData <- dcast(meltedData, Subject + Activity ~ variable, mean)
-#
-
-
-# https://github.com/NthabiM-619/GettingAndCleaningDataProject/blob/master/run_analysis.R:79
-#  #Creating independent tidy data set and showing output
-#  Data2 <- aggregate(. ~subject + activity, Data, mean)
-#  Data2 <- Data2[order(Data2$subject, Data2$activity),]
-#  write.table(Data2, file = "tidydata.txt", row.name = FALSE)
-
-
   # print the computed averages of each variables
-  # options('max.print' = nrow(df2))
-  # print(df2)
-  write.table(df2, 'uci_har_grp_avg.table', sep='\t', row.names = FALSE)
-  cat('Please see file uci_har_grp_avg.table due to limited print options\n')
+  # print(data)
+  write.table(data, 'uci_har_grp_mean.txt', sep='\t', row.names = FALSE)
+  cat('Please see file uci_har_grp_mean.txt due to limited print options\n')
 }
+
 
 # main function to bootstrap the R script
 main()
